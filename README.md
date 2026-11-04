@@ -6,7 +6,7 @@
 (150+ upvotes, still open). Until it ships in `gh` proper, this extension fills the gap:
 
 ```
-$ gh pr push
+$ gh prpush
 pushed HEAD to fork (fix-thing)
 ```
 
@@ -26,15 +26,34 @@ That's it. No state, no config file — it asks `gh` and `git` and gets out of t
 gh extension install technothatch/gh-prpush
 ```
 
-Requires the [GitHub CLI](https://cli.github.com/) (`gh`) on your PATH.
+Requires the [GitHub CLI](https://cli.github.com/) (`gh`) on your PATH. Prebuilt
+static binaries are attached to every release for Linux (amd64/arm64/386),
+macOS (amd64/arm64) and Windows (amd64/arm64); `gh` picks the right one
+automatically.
+
+If you prefer to build from source:
+
+```bash
+git clone https://github.com/technothatch/gh-prpush.git
+cd gh-prpush
+go build -o gh-prpush .        # Windows: go build -o gh-prpush.exe .
+gh extension install .
+```
 
 ## Usage
+
+> **Naming note:** this is a `gh` *extension*, so the command is
+> **`gh prpush`** — not `gh pr push`. That's a `gh` limitation: extensions live
+> in the `gh <name>` namespace, and the built-in `pr` command can't be extended
+> with new subcommands. If/when the feature lands in `gh` itself
+> ([cli/cli#2189](https://github.com/cli/cli/issues/2189)), it will be
+> `gh pr push`.
 
 ```
 cd your-repo
 gh pr checkout 123     # or whatever workflow you use
 # ... commit your changes ...
-gh pr push
+gh prpush
 ```
 
 Flags:

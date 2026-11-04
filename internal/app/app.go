@@ -78,15 +78,16 @@ func Run(args []string, stdout, stderr io.Writer, r ...run.Runner) error {
 		case "--force-with-lease":
 			force = true
 		case "-h", "--help":
-			fmt.Fprint(stdout, `gh pr push - push the head branch of the current pull request
+			fmt.Fprint(stdout, `gh prpush - push the head branch of the current pull request
 
 Usage:
-  gh pr push [--force-with-lease]
+  gh prpush [--force-with-lease]
 
 Pushes the checked-out branch of the PR you are on to the correct remote
 (your fork when the PR is cross-repository, origin otherwise).
 
-Implements https://github.com/cli/cli/issues/2189 as an extension.
+Note: this is a gh extension, so it runs as 'gh prpush'. The upstream
+feature request is https://github.com/cli/cli/issues/2189.
 `)
 			return nil
 		default:
