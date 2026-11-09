@@ -10,6 +10,9 @@ $ gh prpush
 pushed HEAD to fork (fix-thing)
 ```
 
+> **The story behind it:** [Push to the pull request you are actually working on](https://technothatch.iyre.com/blog/gh-prpush-inside-the-project/)
+> — the TechnoThatch journal piece on why `gh pr push` is still missing.
+
 ## What it does
 
 1. Finds the PR for your current branch (`gh pr view`).
