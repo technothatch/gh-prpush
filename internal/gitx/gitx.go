@@ -56,12 +56,33 @@ func GitHubOwnerRepo(url string) (owner, repo string, ok bool) {
 	return githubOwnerRepo(url)
 }
 
-func PickRemote(remotes []Remote, owner string, crossRepo bool) (Remote, error) {
+// PickRemote chooses the remote to push to.
+//
+// A cross-repository PR pushes to the fork: the remote whose URL belongs to
+// the fork owner, or the remote named after that owner.
+//
+// A same-repository PR pushes to the base repository: the remote whose URL
+// points at it, whatever it happens to be called. Requiring the name
+// "origin" would fail on a repository cloned as "upstream", or on one where
+// the fork is "origin" and the upstream is "upstream" - in both cases the
+// right remote is right there. "origin" stays the fallback when no remote
+// matches the base repository.
+func PickRemote(remotes []Remote, baseRepo, owner string, crossRepo bool) (Remote, error) {
 	if !crossRepo {
+		if baseRepo != "" {
+			for _, rm := range remotes {
+				if o, r, ok := githubOwnerRepo(rm.URL); ok && strings.EqualFold(o+"/"+r, baseRepo) {
+					return rm, nil
+				}
+			}
+		}
 		for _, rm := range remotes {
 			if rm.Name == "origin" {
 				return rm, nil
 			}
+		}
+		if baseRepo != "" {
+			return Remote{}, fmt.Errorf("no remote found for %s (remotes: %s); add it with: git remote add origin https://github.com/%s.git", baseRepo, names(remotes), baseRepo)
 		}
 		return Remote{}, fmt.Errorf("no 'origin' remote found (remotes: %s)", names(remotes))
 	}

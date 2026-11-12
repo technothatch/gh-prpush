@@ -22,8 +22,15 @@ type PR struct {
 	} `json:"headRepository"`
 }
 
+// prFields are the pull request fields the tool asks gh for.
+//
+// `gh pr view` has no baseRepository field, but for a same-repository pull
+// request the head repository is the base repository, which is all that is
+// needed to recognise the repository's own remote.
+const prFields = "number,headRefName,isCrossRepository,headRepositoryOwner,headRepository"
+
 func viewPR(r run.Runner) (PR, error) {
-	out, errb, err := r.Run("gh", "pr", "view", "--json", "number,headRefName,isCrossRepository,headRepositoryOwner,headRepository")
+	out, errb, err := r.Run("gh", "pr", "view", "--json", prFields)
 	if err != nil {
 		return PR{}, fmt.Errorf("no pull request found for this branch; create one with 'gh pr create' (%s)", firstLine(errb, out))
 	}
@@ -61,7 +68,7 @@ func currentBranch(r run.Runner) (string, error) {
 // the state described in cli/cli#2942, so we fall back to it.
 func listPRsByBranch(r run.Runner, branch string) ([]PR, error) {
 	out, errb, err := r.Run("gh", "pr", "list", "--head", branch, "--state", "open",
-		"--json", "number,headRefName,isCrossRepository,headRepositoryOwner,headRepository")
+		"--json", prFields)
 	if err != nil {
 		return nil, fmt.Errorf("gh pr list --head %s: %v %s", branch, err, strings.TrimSpace(errb))
 	}
@@ -261,7 +268,9 @@ feature request is https://github.com/cli/cli/issues/2189.
 		return err
 	}
 
-	remote, err := gitx.PickRemote(remotes, pr.HeadRepositoryOwner.Login, pr.IsCrossRepository)
+	// For a same-repository PR the head repository is the repository the PR
+	// was opened against, so its remote is the one to push to.
+	remote, err := gitx.PickRemote(remotes, pr.HeadRepository.NameWithOwner, pr.HeadRepositoryOwner.Login, pr.IsCrossRepository)
 	if err != nil {
 		// The fork has no remote yet - a common state after `gh pr checkout`
 		// on a machine where the fork was never cloned. Offer to add one
@@ -285,7 +294,7 @@ feature request is https://github.com/cli/cli/issues/2189.
 		if err != nil {
 			return err
 		}
-		remote, err = gitx.PickRemote(remotes, owner, true)
+		remote, err = gitx.PickRemote(remotes, "", owner, true)
 		if err != nil {
 			return err
 		}

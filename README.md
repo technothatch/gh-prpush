@@ -18,7 +18,10 @@ pushed HEAD to fork (fix-thing)
 1. Finds the PR for your current branch (`gh pr view`).
 2. Picks the right remote:
    - **cross-repository PR** → the fork remote (matched by URL owner, then by remote name),
-   - **same-repo PR** → `origin`.
+   - **same-repo PR** → the repository's own remote, **whatever it is called**.
+     A remote named `upstream` works just as well as `origin`, and when both
+     exist — your fork as `origin`, the base repo as `upstream` — the push goes
+     to the base repo.
 3. Runs `git push <remote> HEAD:refs/heads/<head-branch>`.
 
 That's it. No state, no config file — it asks `gh` and `git` and gets out of the way.
