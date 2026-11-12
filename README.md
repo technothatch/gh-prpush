@@ -110,3 +110,4 @@ The remote-picking logic is fully covered by unit tests with a fake command runn
 ## License
 
 [MIT](LICENSE)
+selftest marker
