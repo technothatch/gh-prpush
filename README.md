@@ -23,6 +23,30 @@ pushed HEAD to fork (fix-thing)
 
 That's it. No state, no config file — it asks `gh` and `git` and gets out of the way.
 
+### When the fork has no remote yet
+
+After `gh pr checkout` on a machine where the fork was never cloned, there is no
+remote for the fork, and plain `git push` cannot know where to send the branch.
+`gh prpush` fails with the exact command to run.
+
+`--add-remote` does it for you:
+
+```
+$ gh prpush --add-remote
+added remote somebody (https://github.com/somebody/gh-prpush.git)
+pushed HEAD to somebody (fix-thing)
+```
+
+The remote is named after the fork owner and its URL comes from `gh`, so the
+scheme matches the remotes you already have (HTTPS stays HTTPS — `gh`'s
+credential helper is HTTPS-only by default).
+
+It also works in the state where `gh pr view` itself cannot find the pull
+request: `gh` resolves the PR for the current branch through git's push-target
+configuration, which it cannot do when the fork is not a registered remote
+([cli/cli#2942](https://github.com/cli/cli/issues/2942)). When that happens,
+`gh prpush` falls back to `gh pr list --head`, which finds the same PR.
+
 ## Install
 
 ```
@@ -64,6 +88,7 @@ Flags:
 | Flag | Effect |
 |------|--------|
 | `--force-with-lease` | push with `--force-with-lease` (safe-ish force push) |
+| `--add-remote` | add the fork as a remote if it isn't registered yet, then push |
 | `-h`, `--help` | show help |
 
 ## Development
@@ -79,6 +104,8 @@ The remote-picking logic is fully covered by unit tests with a fake command runn
 
 - Upstream issue: [cli/cli#2189](https://github.com/cli/cli/issues/2189) — if/when `gh pr push` ships
   natively, uninstall this extension.
+- Related upstream request: [cli/cli#2942](https://github.com/cli/cli/issues/2942) — `gh pr checkout`
+  should add the fork as a remote. `--add-remote` does that part for the push.
 
 ## License
 

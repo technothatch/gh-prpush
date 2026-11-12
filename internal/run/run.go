@@ -26,7 +26,18 @@ func Fake(responses map[string]struct {
 	Err  string
 	Fail bool
 }) Runner {
-	return fakeRunner{responses}
+	return &fakeRunner{responses: responses}
+}
+
+// FakeSequence returns a runner that answers the same command with a
+// different response each time it is called. Responses beyond the end of the
+// slice repeat the last one.
+func FakeSequence(responses map[string][]struct {
+	Out  string
+	Err  string
+	Fail bool
+}) Runner {
+	return &fakeRunner{sequences: responses, calls: map[string]int{}}
 }
 
 type fakeRunner struct {
@@ -35,10 +46,34 @@ type fakeRunner struct {
 		Err  string
 		Fail bool
 	}
+	sequences map[string][]struct {
+		Out  string
+		Err  string
+		Fail bool
+	}
+	calls map[string]int
 }
 
-func (f fakeRunner) Run(name string, args ...string) (string, string, error) {
+func (f *fakeRunner) Run(name string, args ...string) (string, string, error) {
 	key := name + " " + join(args)
+
+	if f.sequences != nil {
+		seq, ok := f.sequences[key]
+		if !ok {
+			return "", "", fmt.Errorf("fake runner: unexpected command %q", key)
+		}
+		idx := f.calls[key]
+		f.calls[key]++
+		if idx >= len(seq) {
+			idx = len(seq) - 1
+		}
+		r := seq[idx]
+		if r.Fail {
+			return r.Out, r.Err, fmt.Errorf("command failed: %s", key)
+		}
+		return r.Out, r.Err, nil
+	}
+
 	r, ok := f.responses[key]
 	if !ok {
 		return "", "", fmt.Errorf("fake runner: unexpected command %q", key)

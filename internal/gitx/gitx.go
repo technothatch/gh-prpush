@@ -51,6 +51,11 @@ func githubOwnerRepo(url string) (owner, repo string, ok bool) {
 	return parts[0], parts[1], true
 }
 
+// GitHubOwnerRepo exposes the owner/repo of a GitHub remote URL.
+func GitHubOwnerRepo(url string) (owner, repo string, ok bool) {
+	return githubOwnerRepo(url)
+}
+
 func PickRemote(remotes []Remote, owner string, crossRepo bool) (Remote, error) {
 	if !crossRepo {
 		for _, rm := range remotes {
@@ -93,6 +98,21 @@ func Push(r run.Runner, remote Remote, branch string, forceWithLease bool) error
 	_, errb, err := r.Run("git", args...)
 	if err != nil {
 		return fmt.Errorf("git push: %v %s", err, strings.TrimSpace(errb))
+	}
+	return nil
+}
+
+// AddRemote registers a new remote pointing at url under name.
+func AddRemote(r run.Runner, name, url string) error {
+	if name == "" {
+		return fmt.Errorf("remote name must not be empty")
+	}
+	if url == "" {
+		return fmt.Errorf("remote url must not be empty")
+	}
+	_, errb, err := r.Run("git", "remote", "add", name, url)
+	if err != nil {
+		return fmt.Errorf("git remote add %s: %v %s", name, err, strings.TrimSpace(errb))
 	}
 	return nil
 }
